@@ -50,7 +50,7 @@ card_type = 'Visa'
 email = 'foo@gmail.com'
 first_name = 'John'
 last_name = 'Doe'
-name_on_card = 'Jon Doe'
+name_on_card = 'John Doe'
 phone_number = '1234568910'
 shipping_address_1 = 'John Doe'
 shipping_address_2 = '123 Main St'
@@ -280,7 +280,7 @@ print("DONE")
 # https://www.adidas.com/on/demandware.store/Sites-adidas-US-Site/en_US/COSummary-Start/C51340681    
 # 
 # dwfrm_payment_creditCard_type:001
-# dwfrm_payment_creditCard_owner:Mustafa Thamer
+# dwfrm_payment_creditCard_owner:Mike Thomas
 # dwfrm_payment_creditCard_month:08
 # dwfrm_payment_creditCard_year:2021
 # selectedPaymentMethodID:CREDIT_CARD
