@@ -58,50 +58,34 @@ def CheckResponse(response, label):
 session = requests.Session()    # START SESSION
 
 #
-# Get
+# Get ADD TO CART
 #
 endpoint = 'https://www.adidas.com/api/cart_items?sitePath=us'
 response = session.get(endpoint, headers=headers)
 CheckResponse(response, '\nADDTOCART - GET')
 
 #
-# Post
+# Post ADD TO CART
 #
 payload = {
     'product_id' : 'BZ0223',
     'quantity' : '2',
     'product_variation_sku' : 'BZ0223_630',
     'size' : '9',
-#    'recipe' : 'null',
+#    'recipe' : 'null',        # don't set null fields
     'invalidFields' : '[]',
     'isValidating' : 'false',
 #    'clientCaptchaResponse' : ''
 }
-#print('content-length:' + payload.length)
-headers = {
-    'Accept': '*/*',
-    'Accept-Encoding': 'gzip, deflate, br',
-    'Accept-Language': 'en-US,en;q=0.5',
-    'Cache-Control' : 'no-cache',
-    'Connection' : 'keep-alive',
-#    'Content-Length' : '165',        # set by requests module
-    'content-type': 'application/json',
-    # 'Cookie' : ' '                  # set by requests module
-    'Host' : 'www.adidas.com',
-    'origin' : 'https://www.adidas.com',
-    'Pragma' : 'no-cache',
-    'Referer' : 'https://www.adidas.com/us/nmd_r1-primeknit-shoes/BZ0223.html',
-    'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_5) AppleWebKit/537.36 (KHTML, like Gecko) '
-                  'Chrome/52.0.2743.116 Safari/537.36',
-#    'DNT': '1',
-#    'Upgrade-Insecure-Requests': '1',
-}
 
-params = {
-    'sitePath' : 'us',
-}
+headers['content-type'] = 'application/json'
 
-response = session.post(url=endpoint, params=params, json=payload, headers=headers)
+response = session.post(endpoint, json=payload, headers=headers)
 CheckResponse(response, "\nADDTOCART - POST")
+
+#
+# CHECKOUT
+#
+
 
 print('\nDONE')
