@@ -15,7 +15,6 @@ import json
 # https://www.adidas.com/api/products/BY9587/availability?sitePath=us
 
 session = None
-cookies = None
 base_url = 'https://www.adidas.com'
 product_url = base_url + '/on/demandware.store/Sites-adidas-US-Site/en_US/Cart-MiniAddProduct'
 headers1 = {
@@ -111,7 +110,6 @@ def FindItem(model, size, quantity):
 #===============================================================================
 def AddToCart(model, size, sku):
     global session
-    global cookies
 
     print('AddToCart')
     payload = {
@@ -128,45 +126,110 @@ def AddToCart(model, size, sku):
     endpoint = 'https://www.adidas.com/api/cart_items?sitePath=us'
     session = requests.Session()    # START SESSION
     res    = session.get(endpoint, headers=headers1)
-    # did this for first to get the cookies from the page, stored them with next line:
-    cookies = requests.utils.cookiejar_from_dict(requests.utils.dict_from_cookiejar(session.cookies))
 
-    res = session.post(endpoint, json=payload, headers=headers1, timeout=15, cookies=cookies)
+    res = session.post(endpoint, json=payload, headers=headers1, timeout=15)
     print ('post result: ' + str(res.status_code))
 #           print ('text: ' + res.text)
     if (res.status_code==200):
-        res = session.get(endpoint, headers=headers1, cookies=cookies)
+        res = session.get(endpoint, headers=headers1)
         print ('get result: ' + str(res.status_code))
         #           print ('text: ' + res.text)
         if (res.status_code==200):
+            print("AddToCart succeeded")
             return True
         
     return False
 
+#
+# GET- https://www.adidas.com/on/demandware.store/Sites-adidas-US-Site/en_US/COSummary-Start
+# POST - https://www.adidas.com/on/demandware.store/Sites-adidas-US-Site/en_US/COShipping-Submit
+#
 def CheckOut():
     print('Checking out...')
     global session
-    global cookies
+    
+    #
+    #
+    #
     headers = {
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+        'Accept-Encoding': 'gzip, deflate, br',
+        'Accept-Language': 'en-US,en;q=0.5',
+        'Cache-Control': 'no-cache',
+        'Connection': 'keep-alive',
+        'Host': 'www.adidas.com',
+        'Pragma': 'no-cache',
+        'Referer': product_url,     # yes misspelled on purpose
         'Upgrade-Insecure-Requests': '1',
-        'Referer': product_url,
-        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8'
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:57.0) Gecko/20100101 Firefox/57.0',
     }
+    #===========================================================================
+    # endpoint = "https://www.adidas.com/on/demandware.store/Sites-adidas-US-Site/en_US/CODelivery-Start"
+    # response = session.get(endpoint, headers=headers)
+    # response.raise_for_status() # ensure we notice bad responses
+    # print("response status code=", response.status_code)
+    #     
+    # print("START")
+    # print(response.text)
+    # print("END")
+    #     
+    # delivery_key = None
+    # soup = bs4.BeautifulSoup(response.text, 'html.parser')    
+    # div = soup.find('div', {'class': 'col-8'})
+    # if (div != None):
+    #     delivery_key = div.find('input', {'type':'hidden', 'name':'dwfrm_shipping_securekey'})['value']
+    # if (delivery_key != None):
+    #     print('delivery_key:' + delivery_key)
+    #===========================================================================
     
+    #
+    #
+    #
     endpoint = base_url + '/us/delivery-start';    # redirects to https://www.adidas.com/on/demandware.store/Sites-adidas-US-Site/en_US/COShipping-Show
+    response = session.get(endpoint, headers=headers1)
+
+    print("START")
+    print(response.text)
+    print("END")
+
+    soup = bs4.BeautifulSoup(response.text, 'html.parser')        
+    endpoint = soup.find('form', {'class': 'co-formcontinueshopping'})['action']
+    print("data-url:" + endpoint)
     
-    # start at general delivery url, then bget redirected url
-    response = session.get(endpoint, headers=headers1, cookies=cookies)
-    soup = bs4.BeautifulSoup(response.text, 'html.parser')
-    endpoint = soup.find('div', {'class': 'cart_wrapper rbk_shadow_angle rbk_wrapper_checkout summary_wrapper'})['data-url']
-    print("endpoint:" + endpoint)
-    
-    # now get securekey    
-    response = session.get(endpoint, headers=headers1, cookies=cookies)
-    soup = bs4.BeautifulSoup(response.text, 'html.parser')   
-    #delivery_key = soup.find('input', {'name': 'dwfrm_delivery_securekey'})['value']
-    delivery_key = soup.find('input', {'name': 'dwfrm_shipping_securekey'})['value']
-    print('securekey:' + delivery_key)
+    payload = {
+        'dwfrm_cart_checkoutCart': 'Checkout'
+    }
+    response = session.post(endpoint, headers=headers1, data=payload)
+    response.raise_for_status() # ensure we notice bad responses
+    print("response status code=", response.status_code)
+
+
+#===============================================================================
+#     endpoint="https://www.adidas.com/us/checkout-start"
+#     response = session.get(endpoint, headers=headers1)
+# 
+#     endpoint="https://www.adidas.com/us/delivery-start"
+#     response = session.get(endpoint, headers=headers1)
+# 
+#     endpoint = "https://www.adidas.com/on/demandware.store/Sites-adidas-US-Site/en_US/COShipping-Show"
+#     response = session.get(endpoint, headers=headers1)
+#     response.raise_for_status() # ensure we notice bad responses
+#     print("response status code=", response.status_code)
+#         
+#     soup = bs4.BeautifulSoup(response.text, 'html.parser')   
+#     secureKey = soup.find('input', {'name': 'dwfrm_shipping_securekey'})
+#     if (secureKey != None):
+#         delivery_key = secureKey['value']
+#         print("delivery_key:" + delivery_key)
+#  
+# #    print("START")
+# #    print(response.text)
+# #    print("END")
+#     
+#     soup = bs4.BeautifulSoup(response.text, 'html.parser')   
+#     delivery_key = soup.find('input', {'name': 'dwfrm_shipping_securekey'})['value']
+#     print('securekey:' + delivery_key)
+#===============================================================================
     
     # delivery details
     headers = {
@@ -214,7 +277,7 @@ def CheckOut():
         'state': shipping_state + ','
     }
 
-    response = session.post(endpoint, data=payload, headers=headers1, cookies=cookies)
+    response = session.post(endpoint, data=payload, headers=headers1)
     print ('delivery info result: ' + str(response.status_code))
 
     # review & pay
@@ -237,7 +300,7 @@ def CheckOut():
 
     url = soup.find('form', {'id': 'dwfrm_delivery'})['action']
     print('CC url:' + url);
-    response = session.post(url, data=payload, headers=headers1, cookies=cookies)
+    response = session.post(url, data=payload, headers=headers1)
     print ('CC info result: ' + str(response.status_code))
 
     if response.status_code == 200:
