@@ -6,13 +6,8 @@ Created on Aug 27, 2017
 
 import requests
 import bs4
-import webbrowser
 import threading
 import json
-
-#headers1 = {'User-Agent' : 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/60.0.3112.101 Safari/537.36'}
-
-# https://www.adidas.com/api/products/BY9587/availability?sitePath=us
 
 session = None
 base_url = 'https://www.adidas.com'
@@ -96,18 +91,8 @@ def FindItem(model, size, quantity):
     return sku
 
 #
-# https://www.adidas.com/api/cart_items?sitePath=us
-#===============================================================================
-# JSON payload
-# product_id    BY9587
-# quantity    1
-# product_variation_sku    BY9587_640
-# size    9.5
-# recipe    null
-# invalidFields    []
-# isValidating    false
-# clientCaptchaResponse
-#===============================================================================
+#
+#
 def AddToCart(model, size, sku):
     global session
 
@@ -122,17 +107,15 @@ def AddToCart(model, size, sku):
     'isValidating' : 'false',
     'clientCaptchaResponse' : ''
     }
-    print (payload)
     endpoint = 'https://www.adidas.com/api/cart_items?sitePath=us'
     session = requests.Session()    # START SESSION
     res    = session.get(endpoint, headers=headers1)
-
     res = session.post(endpoint, json=payload, headers=headers1, timeout=15)
+
     print ('post result: ' + str(res.status_code))
 #           print ('text: ' + res.text)
     if (res.status_code==200):
         res = session.get(endpoint, headers=headers1)
-        print ('get result: ' + str(res.status_code))
         #           print ('text: ' + res.text)
         if (res.status_code==200):
             print("AddToCart succeeded")
@@ -147,89 +130,57 @@ def AddToCart(model, size, sku):
 def CheckOut():
     print('Checking out...')
     global session
-    
+
     #
-    #
-    #
-    headers = {
-        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-        'Accept-Encoding': 'gzip, deflate, br',
-        'Accept-Language': 'en-US,en;q=0.5',
-        'Cache-Control': 'no-cache',
-        'Connection': 'keep-alive',
-        'Host': 'www.adidas.com',
-        'Pragma': 'no-cache',
-        'Referer': product_url,     # yes misspelled on purpose
-        'Upgrade-Insecure-Requests': '1',
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:57.0) Gecko/20100101 Firefox/57.0',
-    }
-    #===========================================================================
-    # endpoint = "https://www.adidas.com/on/demandware.store/Sites-adidas-US-Site/en_US/CODelivery-Start"
-    # response = session.get(endpoint, headers=headers)
-    # response.raise_for_status() # ensure we notice bad responses
-    # print("response status code=", response.status_code)
-    #     
-    # print("START")
-    # print(response.text)
-    # print("END")
-    #     
-    # delivery_key = None
-    # soup = bs4.BeautifulSoup(response.text, 'html.parser')    
-    # div = soup.find('div', {'class': 'col-8'})
-    # if (div != None):
-    #     delivery_key = div.find('input', {'type':'hidden', 'name':'dwfrm_shipping_securekey'})['value']
-    # if (delivery_key != None):
-    #     print('delivery_key:' + delivery_key)
-    #===========================================================================
-    
-    #
-    #
-    #
+    # Get data-url
+    #    
     endpoint = base_url + '/us/delivery-start';    # redirects to https://www.adidas.com/on/demandware.store/Sites-adidas-US-Site/en_US/COShipping-Show
     response = session.get(endpoint, headers=headers1)
-
-    print("START")
-    print(response.text)
-    print("END")
-
     soup = bs4.BeautifulSoup(response.text, 'html.parser')        
     endpoint = soup.find('form', {'class': 'co-formcontinueshopping'})['action']
     print("data-url:" + endpoint)
     
+    #
+    # post to data-url
+    #
     payload = {
         'dwfrm_cart_checkoutCart': 'Checkout'
     }
     response = session.post(endpoint, headers=headers1, data=payload)
     response.raise_for_status() # ensure we notice bad responses
-    print("response status code=", response.status_code)
 
+    #
+    # Get SecureKey
+    #
+    headers = {
+    'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+    'Accept-Encoding': 'gzip, deflate, br',
+    'Accept-Language': 'en-US,en;q=0.5',
+    'Cache-Control': 'no-cache',
+    'Connection': 'keep-alive',
+    'Host': 'www.adidas.com',
+    'Pragma': 'no-cache',
+    'Referer': 'https://www.adidas.com/on/demandware.store/Sites-adidas-US-Site/en_US/Cart-Show',
+    'Upgrade-Insecure-Requests': '1',
+    'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_5) AppleWebKit/537.36 (KHTML, like Gecko) '
+                  'Chrome/52.0.2743.116 Safari/537.36',
+    }
 
-#===============================================================================
-#     endpoint="https://www.adidas.com/us/checkout-start"
-#     response = session.get(endpoint, headers=headers1)
-# 
-#     endpoint="https://www.adidas.com/us/delivery-start"
-#     response = session.get(endpoint, headers=headers1)
-# 
-#     endpoint = "https://www.adidas.com/on/demandware.store/Sites-adidas-US-Site/en_US/COShipping-Show"
-#     response = session.get(endpoint, headers=headers1)
-#     response.raise_for_status() # ensure we notice bad responses
-#     print("response status code=", response.status_code)
-#         
-#     soup = bs4.BeautifulSoup(response.text, 'html.parser')   
-#     secureKey = soup.find('input', {'name': 'dwfrm_shipping_securekey'})
-#     if (secureKey != None):
-#         delivery_key = secureKey['value']
-#         print("delivery_key:" + delivery_key)
-#  
-# #    print("START")
-# #    print(response.text)
-# #    print("END")
-#     
-#     soup = bs4.BeautifulSoup(response.text, 'html.parser')   
-#     delivery_key = soup.find('input', {'name': 'dwfrm_shipping_securekey'})['value']
-#     print('securekey:' + delivery_key)
-#===============================================================================
+    endpoint="https://www.adidas.com/on/demandware.store/Sites-adidas-US-Site/en_US/COShipping-Show"
+    response = session.get(endpoint, headers=headers)
+    if (response.text.find('securekey') >= 0):
+        print("FOUND IT")
+    print(response.text)
+    
+    soup = bs4.BeautifulSoup(response.text, 'html.parser')   
+    secureKey = soup.find('input', {'name': 'dwfrm_shipping_securekey'})
+    if (secureKey != None):
+        delivery_key = secureKey['value']
+        print("delivery_key:" + delivery_key)
+  
+#    print("START")
+#    print(response.text)
+#    print("END")
     
     # delivery details
     headers = {
